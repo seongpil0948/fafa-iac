@@ -1,0 +1,26 @@
+.terraform/
+# Lock file MUST be committed — HashiCorp's recommendation. It pins provider
+# versions across machines/CI and is the only way to make `terraform init`
+# reproducible. See https://developer.hashicorp.com/terraform/language/files/dependency-lock
+# .terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+!terraform.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Service-account keys must never be committed
+*.json
+!**/stub/package.json
+!firebase/firebase.json
+!firebase/firestore.indexes.json
+*.zip
+modules/functions/stub/
+*.tfplan

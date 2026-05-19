@@ -1,0 +1,23 @@
+rules_version = '2';
+
+// SiveraV2 — Firestore Security Rules
+//
+// Architecture: all reads/writes flow through the Next.js server (Admin SDK)
+// or Cloud Functions (Admin SDK). Admin SDK bypasses these rules entirely.
+// Client SDK access is therefore denied by default. The only exceptions
+// are FCM device tokens (registered from the browser after login).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny: everything not explicitly allowed below.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Browsers register their own FCM tokens after login.
+    match /fcmDevices/{uid}/devices/{deviceId} {
+      allow read, write: if request.auth != null
+                        && request.auth.uid == uid
+                        && request.resource.data.uid == uid;
+    }
+  }
+}
