@@ -20,7 +20,8 @@ fafa-iac/
 ├── firebase/                       # firestore.rules + firestore.indexes.json (consumed by Terraform)
 ├── scripts/
 │   ├── bootstrap-state-bucket.sh   # One-time GCS state bucket (gcloud storage, idempotent)
-│   ├── apply-ttl.sh                # Manual TTL setup (provider doesn't support yet)
+│   ├── apply-ttl.sh                # Manual TTL setup (idempotent, tracks succeeded/failed per collection)
+│   ├── setup-dlq.sh                # Attach DLQ policy to Eventarc-managed Pub/Sub subscriptions
 │   └── seed-secrets.sh             # Seed/update Secret Manager values from apps/web/.env.local
 └── modules/
     ├── project/          # google_project_service (APIs)
@@ -171,14 +172,16 @@ ingress but guarded by `roles/run.invoker` granted exclusively to
 ## Deploy pipeline
 
 1. `terraform plan && terraform apply` (this repo) — provisions infra, Secret Manager resources + IAM.
-2. `bash scripts/apply-ttl.sh` (one-time after first apply, idempotent thereafter).
-3. `bash scripts/seed-secrets.sh` — pushes OAuth secret values from `SiveraV2/apps/web/.env.local`
-   into Secret Manager (idempotent: only adds new version if value differs). Run whenever
-   secret values change. **Never commit secret values to Terraform state.**
-4. `cd .../SiveraV2 && bash functions/scripts/deploy-all.sh` — esbuild-bundles Cloud Functions
+2. `bash scripts/apply-ttl.sh` (one-time after first apply, idempotent thereafter — re-running skips already-configured collections).
+3. `bash scripts/setup-dlq.sh` (one-time after first apply — attaches DLQ policy to Eventarc-managed Pub/Sub subscriptions).
+4. `bash scripts/seed-secrets.sh` — pushes OAuth secret values from `SiveraV2/apps/web/.env.local`
+   into Secret Manager (idempotent: only adds new version if value differs). In CI, set `CI=true` —
+   the script exits 1 if any expected secret is missing. Run whenever secret values change.
+   **Never commit secret values to Terraform state.**
+5. `cd .../SiveraV2 && bash functions/scripts/deploy-all.sh` — esbuild-bundles Cloud Functions
    source and deploys with `gcloud functions deploy --gen2`.
-5. `terraform output function_urls` → set `SYNC_ON_CONNECT_URL` Vercel env var.
-6. `git push origin <branch>` → Vercel webhook builds.
+6. `terraform output function_urls` → set `SYNC_ON_CONNECT_URL` Vercel env var.
+7. `git push origin <branch>` → Vercel webhook builds.
 
 ## Secret Manager secrets
 
@@ -209,6 +212,12 @@ Static checks before every commit / PR:
 terraform fmt -recursive -check
 terraform validate
 ```
+
+CI workflow (`.github/workflows/terraform.yml`) runs four jobs automatically:
+- **validate**: `fmt -check` + `validate` on every push
+- **plan**: posts plan diff as a PR comment on every pull request
+- **apply**: auto-applies on merge to `main` (requires `production` environment approval)
+- **drift**: daily scheduled `plan -detailed-exitcode`; opens a GitHub Issue if drift detected
 
 State bucket sanity:
 

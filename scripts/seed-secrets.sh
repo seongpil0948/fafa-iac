@@ -94,3 +94,9 @@ done
 
 echo ""
 echo "✓ Done. added=${added} skipped=${skipped} missing=${missing}"
+
+# In CI mode, fail hard when secrets are absent so rotations are never silently skipped.
+if [[ -n "${CI:-}" ]] && [[ "${missing}" -gt 0 ]]; then
+  echo "✗ CI mode: ${missing} secret(s) missing from .env.local — aborting." >&2
+  exit 1
+fi

@@ -85,9 +85,12 @@ resource "google_firestore_database" "default" {
 resource "google_firestore_index" "composite" {
   provider = google-beta
 
+  # Stable key: collectionGroup + field paths. More resilient to JSON
+  # re-ordering than md5(jsonencode(idx)) — state mv is not needed when
+  # only non-structural metadata (e.g. comments) changes in the JSON.
   for_each = {
     for idx in local.firestore_indexes.indexes :
-    md5(jsonencode(idx)) => idx
+    "${idx.collectionGroup}#${join("-", [for f in idx.fields : f.fieldPath])}" => idx
   }
 
   project     = var.project_id

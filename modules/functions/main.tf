@@ -32,6 +32,39 @@ variable "pubsub_topics" {
   })
 }
 
+# Config for HTTPS-triggered functions (sync-on-connect, sync-dispatch, cleanup, expire-trials).
+variable "https_function_config" {
+  description = "Resource sizing for HTTPS Cloud Functions Gen 2."
+  type = object({
+    available_memory   = string
+    timeout_seconds    = number
+    max_instance_count = number
+  })
+  default = {
+    available_memory   = "512Mi"
+    timeout_seconds    = 540
+    max_instance_count = 10
+  }
+}
+
+# Config for Pub/Sub-triggered functions (sync-credential, send-fcm).
+# max_instance_count is intentionally low: 5 instances × Cloud Run concurrency
+# comfortably handles the normal sync backlog (≤500 credentials per dispatch,
+# each sync taking <30 s). Raise if Cloud Monitoring shows sustained queue lag.
+variable "pubsub_function_config" {
+  description = "Resource sizing for Pub/Sub-triggered Cloud Functions Gen 2."
+  type = object({
+    available_memory   = string
+    timeout_seconds    = number
+    max_instance_count = number
+  })
+  default = {
+    available_memory   = "1Gi"
+    timeout_seconds    = 540
+    max_instance_count = 5
+  }
+}
+
 # Look up the project number, used to construct the build service-account
 # email. We avoid plumbing project_number through tfvars by resolving it
 # dynamically.
@@ -149,9 +182,10 @@ resource "google_cloudfunctions2_function" "https" {
   }
 
   service_config {
-    available_memory      = "512Mi"
-    timeout_seconds       = 540
-    max_instance_count    = 10
+    available_memory      = var.https_function_config.available_memory
+    timeout_seconds       = var.https_function_config.timeout_seconds
+    max_instance_count    = var.https_function_config.max_instance_count
+    min_instance_count    = 0
     service_account_email = var.service_account_email
     ingress_settings      = "ALLOW_ALL"
   }
@@ -170,6 +204,7 @@ resource "google_cloudfunctions2_function" "https" {
       service_config[0].available_memory,
       service_config[0].timeout_seconds,
       service_config[0].max_instance_count,
+      service_config[0].min_instance_count,
     ]
   }
 }
@@ -193,9 +228,10 @@ resource "google_cloudfunctions2_function" "pubsub" {
   }
 
   service_config {
-    available_memory      = "1Gi"
-    timeout_seconds       = 540
-    max_instance_count    = 50
+    available_memory      = var.pubsub_function_config.available_memory
+    timeout_seconds       = var.pubsub_function_config.timeout_seconds
+    max_instance_count    = var.pubsub_function_config.max_instance_count
+    min_instance_count    = 0
     service_account_email = var.service_account_email
     ingress_settings      = "ALLOW_INTERNAL_ONLY"
   }
@@ -216,9 +252,12 @@ resource "google_cloudfunctions2_function" "pubsub" {
       build_config[0].entry_point,
       build_config[0].runtime,
       service_config[0].environment_variables,
+      service_config[0].secret_environment_variables,
       service_config[0].available_memory,
       service_config[0].timeout_seconds,
       service_config[0].max_instance_count,
+      service_config[0].min_instance_count,
+      event_trigger[0].retry_policy,
     ]
   }
 }

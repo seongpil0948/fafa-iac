@@ -84,6 +84,16 @@
         { "fieldPath": "startedAt", "order": "DESCENDING" }
       ]
     }
+    ,
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tier", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "trialEndsAt", "order": "ASCENDING" }
+      ]
+    }
   ],
   "fieldOverrides": []
 }

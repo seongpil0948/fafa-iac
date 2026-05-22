@@ -14,10 +14,10 @@ locals {
 
 # Dead-letter topic. NOTE: a topic alone is not a DLQ — the dead-letter
 # *policy* lives on the Cloud Functions Gen 2 / Eventarc subscription. Eventarc
-# manages those subscriptions implicitly, so attaching a DLQ requires either
-# (a) creating an explicit google_pubsub_subscription with dead_letter_policy
-# and pointing the function at it, or (b) reaching into the Eventarc-managed
-# subscription via gcloud. Both are out of scope here — track in a follow-up.
+# manages those subscriptions implicitly, so attaching a DLQ requires reaching
+# into the Eventarc-managed subscription via gcloud after terraform apply.
+# Run scripts/setup-dlq.sh once after the first apply and after any function
+# re-creation. The script is idempotent.
 resource "google_pubsub_topic" "dead_letter" {
   project                    = var.project_id
   name                       = "fafa-dead-letter"

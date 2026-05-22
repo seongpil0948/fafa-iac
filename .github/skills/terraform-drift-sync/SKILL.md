@@ -17,6 +17,7 @@ Reconcile live GCP / Firebase infrastructure with Terraform state in `fafa-iac` 
 - A new index/secret/topic was added to config and you are unsure if it already exists upstream.
 - Bulk discovery of importable resources is needed (`terraform query`).
 - A scope keyword is passed as the skill argument (for example `firestore`) to limit the sweep.
+- The **daily drift CI job** (`.github/workflows/terraform.yml` `drift` job, runs at 02:00 UTC) opened a GitHub Issue — investigate the plan output attached to the issue and use this skill to resolve.
 
 ## Safety Rules (hard stops)
 

@@ -28,7 +28,8 @@ terraform apply
 
 # One-time, idempotent setup
 bash scripts/bootstrap-state-bucket.sh   # creates gs://fafa-tf-state
-bash scripts/apply-ttl.sh                # Firestore TTL (not supported by provider)
+bash scripts/apply-ttl.sh                # Firestore TTL (idempotent, exit 1 on failures)
+bash scripts/setup-dlq.sh                # DLQ policy on Eventarc-managed Pub/Sub subscriptions
 bash scripts/seed-secrets.sh             # push secret values from SiveraV2/apps/web/.env.local
 
 # Target a single resource during recovery
@@ -102,7 +103,7 @@ Cloud Run service level because that's where Gen 2 functions live.
 
 ## Provider versions
 
-Pinned in [versions.tf](versions.tf): `google`/`google-beta` `~> 6.8`,
+Pinned in [versions.tf](versions.tf): `google`/`google-beta` `~> 6.11`,
 Terraform `>= 1.6.0`. `firebase`, `firestore` (beta-only), and
 `firebaserules` resources all use the `google-beta` provider — keep that
 in mind when adding resources.
@@ -114,6 +115,11 @@ in mind when adding resources.
 - **TTL config can't be Terraform-managed yet** — `scripts/apply-ttl.sh`
   is the canonical setup for `oauthStates`, `syncRuns`, `amazonReportCache`,
   `usageLogs` (`.expiresAt`). Re-run after adding a new TTL collection.
+- **DLQ policy is not wired via Terraform** — `scripts/setup-dlq.sh` attaches
+  the dead-letter policy to Eventarc-managed Pub/Sub subscriptions. Run once
+  after first apply. Terraform's Pub/Sub module only creates the DLQ topic; the
+  policy attachment requires `gcloud pubsub subscriptions modify-push-config` because
+  Eventarc manages the subscription lifecycle.
 - **`terraform.tfvars` is gitignored**; only the `.example` is committed.
   Default values in `variables.tf` cover the production project, so a plan
   works without a tfvars file in most cases.
