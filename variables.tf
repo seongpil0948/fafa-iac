@@ -34,5 +34,11 @@ variable "expire_trials_schedule" {
 
 variable "functions_runtime" {
   type    = string
-  default = "nodejs24"
+  default = "nodejs22"
+  # nodejs24 currently resolves to an RC base image whose bundled Functions
+  # Framework breaks `firebase-functions@^7` onMessagePublished (malformed
+  # CloudEvent body). Re-pin to nodejs24 once it is GA. Note: this value is
+  # informational only — modules/functions/main.tf has build_config[0].runtime
+  # in ignore_changes; the operational runtime is set by
+  # SiveraV2/functions/scripts/deploy-all.sh (RUNTIME env).
 }
