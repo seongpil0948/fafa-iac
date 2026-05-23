@@ -1,12 +1,13 @@
 locals {
   function_names = {
-    sync_on_connect = "sync-on-connect"
-    sync_on_demand  = "sync-on-demand"
-    sync_dispatch   = "sync-dispatch"
-    sync_credential = "sync-credential"
-    send_fcm        = "send-fcm"
-    cleanup         = "cleanup"
-    expire_trials   = "expire-trials"
+    sync_on_connect       = "sync-on-connect"
+    sync_on_demand        = "sync-on-demand"
+    sync_dispatch         = "sync-dispatch"
+    sync_credential       = "sync-credential"
+    send_fcm              = "send-fcm"
+    cleanup               = "cleanup"
+    expire_trials         = "expire-trials"
+    process_amazon_report = "process-amazon-report"
   }
 }
 
@@ -60,6 +61,7 @@ module "functions" {
   pubsub_topics = {
     sync_credential = module.pubsub.sync_credential_topic_id
     fcm_send        = module.pubsub.fcm_send_topic_id
+    amazon_report   = module.pubsub.amazon_report_topic_id
   }
 
   depends_on = [module.firestore, module.pubsub]

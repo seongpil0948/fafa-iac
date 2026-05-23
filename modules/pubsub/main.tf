@@ -36,6 +36,21 @@ resource "google_pubsub_topic" "fcm_send" {
   message_retention_duration = local.retention
 }
 
+resource "google_pubsub_topic" "amazon_report" {
+  project                    = var.project_id
+  name                       = "amazon-report-requested"
+  message_retention_duration = local.retention
+}
+
+# Allow the sync-runner SA to publish amazon report requests from the web
+# route handler (via the runtime SA that also runs process-amazon-report).
+resource "google_pubsub_topic_iam_member" "runner_amazon_report_publisher" {
+  project = var.project_id
+  topic   = google_pubsub_topic.amazon_report.name
+  role    = "roles/pubsub.publisher"
+  member  = "serviceAccount:${var.sync_runner_sa_email}"
+}
+
 # Allow the sync-runner SA to publish to the DLQ from inside a function when
 # it decides a message is permanently un-processable.
 resource "google_pubsub_topic_iam_member" "runner_dlq_publisher" {
@@ -51,6 +66,10 @@ output "sync_credential_topic_id" {
 
 output "fcm_send_topic_id" {
   value = google_pubsub_topic.fcm_send.id
+}
+
+output "amazon_report_topic_id" {
+  value = google_pubsub_topic.amazon_report.id
 }
 
 output "dead_letter_topic_id" {

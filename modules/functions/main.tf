@@ -16,13 +16,14 @@ variable "service_account_email" {
 
 variable "function_names" {
   type = object({
-    sync_on_connect = string
-    sync_on_demand  = string
-    sync_dispatch   = string
-    sync_credential = string
-    send_fcm        = string
-    cleanup         = string
-    expire_trials   = string
+    sync_on_connect       = string
+    sync_on_demand        = string
+    sync_dispatch         = string
+    sync_credential       = string
+    send_fcm              = string
+    cleanup               = string
+    expire_trials         = string
+    process_amazon_report = string
   })
 }
 
@@ -30,6 +31,7 @@ variable "pubsub_topics" {
   type = object({
     sync_credential = string
     fcm_send        = string
+    amazon_report   = string
   })
 }
 
@@ -147,6 +149,7 @@ resource "google_storage_bucket_object" "stub" {
 locals {
   https_functions = {
     (var.function_names.sync_on_connect) = "syncOnConnect"
+    (var.function_names.sync_on_demand)  = "syncOnDemand"
     (var.function_names.sync_dispatch)   = "syncDispatch"
     (var.function_names.cleanup)         = "cleanup"
     (var.function_names.expire_trials)   = "expireTrials"
@@ -160,6 +163,10 @@ locals {
     (var.function_names.send_fcm) = {
       entry_point = "sendFcm"
       topic       = var.pubsub_topics.fcm_send
+    }
+    (var.function_names.process_amazon_report) = {
+      entry_point = "processAmazonReport"
+      topic       = var.pubsub_topics.amazon_report
     }
   }
 }

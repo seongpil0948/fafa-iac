@@ -67,6 +67,7 @@ apply_ttl oauthStates       expiresAt
 apply_ttl syncRuns          expiresAt
 apply_ttl amazonReportCache expiresAt
 apply_ttl usageLogs         expiresAt
+apply_ttl amazonReports     expiresAt
 
 # Raw platform metric mirrors (90-day retention for reconciliation/audit).
 apply_ttl dailyMetrics_raw             expiresAt
