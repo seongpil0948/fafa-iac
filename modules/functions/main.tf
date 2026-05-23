@@ -17,6 +17,7 @@ variable "service_account_email" {
 variable "function_names" {
   type = object({
     sync_on_connect = string
+    sync_on_demand  = string
     sync_dispatch   = string
     sync_credential = string
     send_fcm        = string

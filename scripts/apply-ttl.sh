@@ -68,6 +68,14 @@ apply_ttl syncRuns          expiresAt
 apply_ttl amazonReportCache expiresAt
 apply_ttl usageLogs         expiresAt
 
+# Raw platform metric mirrors (90-day retention for reconciliation/audit).
+apply_ttl dailyMetrics_raw             expiresAt
+apply_ttl campaignDailyMetrics_raw     expiresAt
+apply_ttl adGroupDailyMetrics_raw      expiresAt
+apply_ttl adSetDailyMetrics_raw        expiresAt
+apply_ttl adDailyMetrics_raw           expiresAt
+apply_ttl gmvMaxItemDailyMetrics_raw   expiresAt
+
 echo ""
 echo "✓ TTL policies done. succeeded=${succeeded} failed=${failed}"
 if [[ "${failed}" -gt 0 ]]; then

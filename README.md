@@ -151,7 +151,10 @@ shred -u sa-vercel-app.json
 ## Firestore TTL policies (manual, not yet supported in Terraform google provider)
 
 ```bash
-# Applies TTL on oauthStates / syncRuns / amazonReportCache / usageLogs.
+# Applies TTL on:
+# - oauthStates / syncRuns / amazonReportCache / usageLogs
+# - dailyMetrics_raw / campaignDailyMetrics_raw / adGroupDailyMetrics_raw
+# - adSetDailyMetrics_raw / adDailyMetrics_raw / gmvMaxItemDailyMetrics_raw
 bash scripts/apply-ttl.sh
 ```
 

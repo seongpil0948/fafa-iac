@@ -1,6 +1,7 @@
 locals {
   function_names = {
     sync_on_connect = "sync-on-connect"
+    sync_on_demand  = "sync-on-demand"
     sync_dispatch   = "sync-dispatch"
     sync_credential = "sync-credential"
     send_fcm        = "send-fcm"
@@ -64,11 +65,21 @@ module "functions" {
   depends_on = [module.firestore, module.pubsub]
 }
 
-# Allow the Vercel app SA to invoke sync-on-connect only.
+# Allow the Vercel app SA to invoke sync-on-connect and sync-on-demand.
+# sync-on-demand powers the dashboard "지금 동기화" button; the Vercel route
+# mints an OIDC ID token via sa-vercel-app and POSTs {uid, credentialId}.
 resource "google_cloud_run_v2_service_iam_member" "vercel_invokes_sync_on_connect" {
   project  = var.project_id
   location = var.region
   name     = module.functions.cloud_run_service_names[local.function_names.sync_on_connect]
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${module.iam.vercel_app_email}"
+}
+
+resource "google_cloud_run_v2_service_iam_member" "vercel_invokes_sync_on_demand" {
+  project  = var.project_id
+  location = var.region
+  name     = module.functions.cloud_run_service_names[local.function_names.sync_on_demand]
   role     = "roles/run.invoker"
   member   = "serviceAccount:${module.iam.vercel_app_email}"
 }

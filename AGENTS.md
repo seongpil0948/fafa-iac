@@ -114,7 +114,8 @@ in mind when adding resources.
   bootstrap script already does). Don't add `gsutil` calls.
 - **TTL config can't be Terraform-managed yet** — `scripts/apply-ttl.sh`
   is the canonical setup for `oauthStates`, `syncRuns`, `amazonReportCache`,
-  `usageLogs` (`.expiresAt`). Re-run after adding a new TTL collection.
+   `usageLogs`, and raw metric mirrors (`*_raw`) via `.expiresAt`.
+   Re-run after adding a new TTL collection.
 - **DLQ policy is not wired via Terraform** — `scripts/setup-dlq.sh` attaches
   the dead-letter policy to Eventarc-managed Pub/Sub subscriptions. Run once
   after first apply. Terraform's Pub/Sub module only creates the DLQ topic; the
