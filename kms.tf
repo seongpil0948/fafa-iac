@@ -1,11 +1,3 @@
-variable "project_id" {
-  type = string
-}
-
-variable "region" {
-  type = string
-}
-
 resource "google_kms_key_ring" "fafa" {
   project  = var.project_id
   name     = "fafa-firestore"
@@ -59,8 +51,4 @@ resource "google_kms_crypto_key_iam_member" "firestore_agent" {
   member        = "serviceAccount:${google_project_service_identity.firestore.email}"
 
   depends_on = [time_sleep.wait_for_firestore_agent]
-}
-
-output "crypto_key_id" {
-  value = google_kms_crypto_key.firestore.id
 }

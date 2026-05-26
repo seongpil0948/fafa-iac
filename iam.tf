@@ -1,7 +1,3 @@
-variable "project_id" {
-  type = string
-}
-
 # Runtime SA for all Cloud Functions (Firestore + Pub/Sub + FCM).
 resource "google_service_account" "sync_runner" {
   project      = var.project_id
@@ -69,16 +65,4 @@ resource "google_service_account_iam_member" "vercel_token_creator" {
   service_account_id = google_service_account.vercel_app.name
   role               = "roles/iam.serviceAccountTokenCreator"
   member             = "serviceAccount:${google_service_account.vercel_app.email}"
-}
-
-output "sync_runner_email" {
-  value = google_service_account.sync_runner.email
-}
-
-output "scheduler_invoker_email" {
-  value = google_service_account.scheduler_invoker.email
-}
-
-output "vercel_app_email" {
-  value = google_service_account.vercel_app.email
 }

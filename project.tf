@@ -1,7 +1,3 @@
-variable "project_id" {
-  type = string
-}
-
 locals {
   apis = [
     "firestore.googleapis.com",

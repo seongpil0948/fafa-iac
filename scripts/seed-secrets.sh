@@ -4,7 +4,7 @@
 # app's .env.local into GCP Secret Manager. Designed to be re-run safely:
 #
 #   - If the secret resource is missing, abort with a hint to run
-#     `terraform apply` (the resource is owned by modules/secrets/).
+#     `terraform apply` (the resource is owned by secrets.tf).
 #   - If no existing version matches the .env.local value, add a new
 #     version. Otherwise, skip — saves on Secret Manager versions quota
 #     and avoids unnecessary "latest" pointer churn.
@@ -27,7 +27,7 @@ if [[ ! -f "${ENV_FILE}" ]]; then
   exit 1
 fi
 
-# Names mirror modules/secrets/main.tf -> local.platform_secret_names.
+# Names mirror secrets.tf -> local.platform_secret_names.
 SECRETS=(
   AMAZON_CLIENT_ID
   AMAZON_CLIENT_SECRET

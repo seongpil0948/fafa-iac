@@ -1,6 +1,6 @@
 ---
 name: firestore-index-sync
-description: 'Synchronize Firestore composite indexes between fafa-iac/firebase/firestore.indexes.json and modules/firestore/main.tf (Terraform). Use when: adding or removing a composite index, deploying index changes, recovering from out-of-band "firebase deploy --only firestore:indexes" that left Terraform state out of sync, verifying that live Firestore indexes match the JSON file, or resolving a "google_firestore_index.composite" + create failure in terraform apply. Keywords: firestore index, composite index, firebase deploy, terraform import, index drift, nextSyncAt, expire-trials, FAILED_PRECONDITION.'
+description: 'Synchronize Firestore composite indexes between fafa-iac/firebase/firestore.indexes.json and firestore.tf (Terraform). Use when: adding or removing a composite index, deploying index changes, recovering from out-of-band "firebase deploy --only firestore:indexes" that left Terraform state out of sync, verifying that live Firestore indexes match the JSON file, or resolving a "google_firestore_index.composite" + create failure in terraform apply. Keywords: firestore index, composite index, firebase deploy, terraform import, index drift, nextSyncAt, expire-trials, FAILED_PRECONDITION.'
 argument-hint: 'What changed: "add <collection> (<field1>, <field2>)", "remove <collection>", "drift recover", or "verify".'
 user-invocable: true
 ---
@@ -8,7 +8,7 @@ user-invocable: true
 # Firestore Index Sync
 
 Authoritative workflow for keeping `firebase/firestore.indexes.json`,
-`modules/firestore/main.tf`, and live Firestore composite indexes in sync.
+`firestore.tf`, and live Firestore composite indexes in sync.
 
 ## Canonical Relationship
 
@@ -17,14 +17,12 @@ fafa-iac/
 ├── firebase/
 │   ├── firebase.json              ← points "indexes": "firestore.indexes.json"
 │   └── firestore.indexes.json     ← THE SINGLE SOURCE OF TRUTH
-└── modules/
-    └── firestore/
-        └── main.tf
-            local.firestore_indexes = jsondecode(file("${path.root}/firebase/firestore.indexes.json"))
-            resource "google_firestore_index" "composite" {
-              for_each = { for idx in local.firestore_indexes.indexes : "${idx.collectionGroup}#${join("-", [for f in idx.fields : f.fieldPath])}" => idx }
-              ...
-            }
+└── firestore.tf
+    local.firestore_indexes = jsondecode(file("${path.root}/firebase/firestore.indexes.json"))
+    resource "google_firestore_index" "composite" {
+      for_each = { for idx in local.firestore_indexes.indexes : "${idx.collectionGroup}#${join("-", [for f in idx.fields : f.fieldPath])}" => idx }
+      ...
+    }
 ```
 
 **Both deployment paths read the same JSON.**
@@ -43,7 +41,7 @@ fafa-iac/
 
 ## Safety Rules
 
-1. Never edit `google_firestore_index` resources in `main.tf` directly —
+1. Never edit `google_firestore_index` resources in `firestore.tf` directly —
    the `for_each` is fully auto-generated from the JSON. Only edit the JSON.
 2. Never add indexes via the Firestore Console or `gcloud firestore indexes create`.
    Console-created indexes are not in state and not in the JSON.
@@ -85,17 +83,17 @@ fafa-iac/
 
    ```bash
    cd /home/sp/code/project/fafa-iac
-   terraform plan -no-color -target='module.firestore.google_firestore_index.composite'
+   terraform plan -no-color -target='google_firestore_index.composite'
    ```
 
    The new resource address will be
-   `module.firestore.google_firestore_index.composite["<collectionGroup>#<field1>-<field2>"]`.
+   `google_firestore_index.composite["<collectionGroup>#<field1>-<field2>"]`.
    If you see `-/+` or more changes than expected, stop and investigate.
 
 4. **Terraform apply**:
 
    ```bash
-   terraform apply -target='module.firestore.google_firestore_index.composite'
+   terraform apply -target='google_firestore_index.composite'
    ```
 
    Index build is async — Firestore starts building in the background.
@@ -129,10 +127,10 @@ fafa-iac/
 2. **Remove the JSON entry** (canonical source). Identify it by
    `collectionGroup` + `fields` combination.
 
-3. `terraform plan -target='module.firestore.google_firestore_index.composite'`
+3. `terraform plan -target='google_firestore_index.composite'`
    — confirm exactly one `- destroy`.
 
-4. `terraform apply -target='module.firestore.google_firestore_index.composite'`
+4. `terraform apply -target='google_firestore_index.composite'`
 
 ---
 
@@ -179,14 +177,14 @@ already exists in Firestore, then `terraform apply` fails with
 
    ```bash
    terraform import \
-     'module.firestore.google_firestore_index.composite["<collectionGroup>#<field1>-<field2>"]' \
+     'google_firestore_index.composite["<collectionGroup>#<field1>-<field2>"]' \
      'projects/fafa-255a2/databases/(default)/collectionGroups/<col>/indexes/<live-id>'
    ```
 
 4. **Verify clean plan**:
 
    ```bash
-   terraform plan -no-color -target='module.firestore.google_firestore_index.composite'
+   terraform plan -no-color -target='google_firestore_index.composite'
    ```
 
    Expected: `Plan: 0 to add, 0 to change, 0 to destroy.`
@@ -242,6 +240,6 @@ All three counts should match. A mismatch means:
 ## References
 
 - Canonical index file: [firebase/firestore.indexes.json](../../../firebase/firestore.indexes.json)
-- Terraform consumer: [modules/firestore/main.tf](../../../modules/firestore/main.tf)
+- Terraform consumer: [firestore.tf](../../../firestore.tf)
 - Drift recovery (broader): [terraform-drift-sync](../terraform-drift-sync/SKILL.md)
 - Firestore schema types: `packages/platforms/src/firestore-schema.ts` in the SiveraV2 repo

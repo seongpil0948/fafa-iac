@@ -38,7 +38,13 @@ variable "functions_runtime" {
   # nodejs24 currently resolves to an RC base image whose bundled Functions
   # Framework breaks `firebase-functions@^7` onMessagePublished (malformed
   # CloudEvent body). Re-pin to nodejs24 once it is GA. Note: this value is
-  # informational only — modules/functions/main.tf has build_config[0].runtime
-  # in ignore_changes; the operational runtime is set by
+  # informational only — functions.tf has build_config[0].runtime in
+  # ignore_changes; the operational runtime is set by
   # SiveraV2/functions/scripts/deploy-all.sh (RUNTIME env).
+}
+
+variable "firestore_cmek_key_name" {
+  type        = string
+  description = "Full resource ID of the KMS crypto key for Firestore CMEK. Pass empty string to provision the database without CMEK (Firestore CMEK is a create-time-only setting). The live (default) database was provisioned without CMEK — leave this empty."
+  default     = ""
 }

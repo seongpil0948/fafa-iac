@@ -53,8 +53,8 @@ Record the `Plan: X to add, Y to change, Z to destroy` line.
 When a scope is given, target it. This produces a focused plan you can reason about:
 
 ```bash
-terraform plan -no-color -target=module.firestore
-terraform plan -no-color -target='module.firestore.google_firestore_index.composite'
+terraform plan -no-color -target=google_firestore_index.composite
+terraform plan -no-color -target='google_firestore_index.composite'
 ```
 
 `-target` is a triage tool only — never use it for the final apply gate.
@@ -112,7 +112,7 @@ terraform import '<ADDRESS>' '<ID>'
 For `for_each` keys, ALWAYS quote the whole address (bash globbing + brackets):
 
 ```bash
-terraform import 'module.firestore.google_firestore_index.composite["<md5-key>"]' \
+terraform import 'google_firestore_index.composite["<md5-key>"]' \
   'projects/fafa-255a2/databases/(default)/collectionGroups/<col>/indexes/<INDEX_ID>'
 ```
 
@@ -200,7 +200,7 @@ If Firestore replacement still appears → STOP, request explicit user confirmat
 
 ## Worked Example: Firestore Index Drift (May 2026)
 
-Symptom: plan proposed `+ create` for one composite index under `module.firestore.google_firestore_index.composite["62f7003a51c1a37b79697ef355f8c994"]`.
+Symptom: plan proposed `+ create` for one composite index under `google_firestore_index.composite["62f7003a51c1a37b79697ef355f8c994"]`.
 
 ```bash
 # 1. Verify it exists remotely
@@ -210,11 +210,11 @@ gcloud firestore indexes composite list --project=fafa-255a2 --format=json \
 
 # 2. Import into the exact for_each-keyed address (quoted)
 terraform import \
-  'module.firestore.google_firestore_index.composite["62f7003a51c1a37b79697ef355f8c994"]' \
+  'google_firestore_index.composite["62f7003a51c1a37b79697ef355f8c994"]' \
   'projects/fafa-255a2/databases/(default)/collectionGroups/credentials/indexes/CICAgJiUpoML'
 
 # 3. Confirm Firestore module is clean
-terraform plan -no-color -target=module.firestore
+terraform plan -no-color -target=google_firestore_index.composite
 # → No changes.
 
 # 4. Final un-targeted plan
@@ -230,4 +230,4 @@ terraform plan -no-color
 - https://developer.hashicorp.com/terraform/cli/commands/query
 - https://developer.hashicorp.com/terraform/cli/state/resource-addressing
 - [fafa-iac README](../../../README.md)
-- [modules/firestore/main.tf](../../../modules/firestore/main.tf)
+- [firestore.tf](../../../firestore.tf)

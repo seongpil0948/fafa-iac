@@ -1,17 +1,3 @@
-variable "project_id" {
-  type = string
-}
-
-variable "region" {
-  type = string
-}
-
-variable "cmek_key_name" {
-  type        = string
-  description = "Full resource ID of the KMS crypto key for Firestore CMEK. Pass empty string to provision the database without CMEK (Firestore CMEK is a create-time-only setting)."
-  default     = ""
-}
-
 locals {
   firestore_indexes = jsondecode(file("${path.root}/firebase/firestore.indexes.json"))
   firestore_rules   = file("${path.root}/firebase/firestore.rules")
@@ -46,8 +32,8 @@ resource "google_firebase_web_app" "web" {
 # database. The KMS module still provisions the CMEK key for future use
 # (e.g. a second database, or a future re-provisioning window).
 #
-# If you ever need CMEK on a NEW database, set `var.cmek_key_name` to the
-# crypto key id and uncomment the cmek_config block below before the first
+# If you ever need CMEK on a NEW database, set `var.firestore_cmek_key_name`
+# to the crypto key id and uncomment the cmek_config block before the first
 # apply on that database.
 resource "google_firestore_database" "default" {
   provider                    = google-beta
@@ -59,12 +45,12 @@ resource "google_firestore_database" "default" {
   app_engine_integration_mode = "DISABLED"
   delete_protection_state     = "DELETE_PROTECTION_ENABLED"
 
-  # dynamic cmek_config — populated only when cmek_key_name is non-empty.
+  # dynamic cmek_config — populated only when firestore_cmek_key_name is non-empty.
   # On an imported, non-CMEK database this stays empty and matches reality.
   dynamic "cmek_config" {
-    for_each = var.cmek_key_name == "" ? [] : [1]
+    for_each = var.firestore_cmek_key_name == "" ? [] : [1]
     content {
-      kms_key_name = var.cmek_key_name
+      kms_key_name = var.firestore_cmek_key_name
     }
   }
 
@@ -126,12 +112,4 @@ resource "google_firebaserules_release" "firestore" {
   project      = var.project_id
   name         = "cloud.firestore"
   ruleset_name = google_firebaserules_ruleset.firestore.name
-}
-
-output "database_name" {
-  value = google_firestore_database.default.name
-}
-
-output "web_app_id" {
-  value = google_firebase_web_app.web.app_id
 }
