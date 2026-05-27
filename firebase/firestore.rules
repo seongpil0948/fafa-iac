@@ -19,5 +19,25 @@ service cloud.firestore {
                         && request.auth.uid == uid
                         && request.resource.data.uid == uid;
     }
+
+    // Read-only client subscription for the Amazon Reports detail page
+    // (`useReportStatus` hook in apps/web/lib/platforms/amazon/reports/
+    // useReportStatus.ts). Writes remain Admin-only (sync worker +
+    // process-amazon-report Cloud Function). The hook only watches the
+    // parent doc; the `rows` subcollection stays default-deny and is
+    // fetched via the Admin-SDK-backed route handler.
+    match /amazonReports/{reportId} {
+      allow read: if request.auth != null
+                  && request.auth.uid == resource.data.uid;
+    }
+
+    // Unified cross-platform report jobs (Phase A — schema only, no
+    // writers yet). See packages/platforms/src/firestore-schema.ts
+    // (ReportJobDoc) and docs/unified-reports.md. Writes remain
+    // Admin-only (Cloud Functions worker, planned Phase B+).
+    match /reportJobs/{jobId} {
+      allow read: if request.auth != null
+                  && request.auth.uid == resource.data.uid;
+    }
   }
 }

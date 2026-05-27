@@ -51,3 +51,14 @@ resource "google_pubsub_topic_iam_member" "runner_dlq_publisher" {
   role    = "roles/pubsub.publisher"
   member  = "serviceAccount:${google_service_account.sync_runner.email}"
 }
+
+# Allow the Vercel app SA to publish manual resync requests directly to the
+# sync-credential-requested topic. This is used as the fallback path in
+# apps/web/lib/server/cf-invoke.ts:notifyManualSync when SYNC_ON_DEMAND_URL
+# is unset (local dev or environments without the on-demand HTTPS function).
+resource "google_pubsub_topic_iam_member" "vercel_sync_credential_publisher" {
+  project = var.project_id
+  topic   = google_pubsub_topic.sync_credential.name
+  role    = "roles/pubsub.publisher"
+  member  = "serviceAccount:${google_service_account.vercel_app.email}"
+}
