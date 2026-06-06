@@ -65,6 +65,7 @@ apply_ttl() {
 
 apply_ttl oauthStates       expiresAt
 apply_ttl syncRuns          expiresAt
+apply_ttl amazonMetricCache expiresAt
 apply_ttl amazonReportCache expiresAt
 apply_ttl usageLogs         expiresAt
 apply_ttl amazonReports     expiresAt

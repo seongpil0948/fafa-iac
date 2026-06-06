@@ -34,6 +34,16 @@ resource "google_pubsub_topic" "amazon_report" {
   message_retention_duration = local.pubsub_retention
 }
 
+# Unified cross-platform report jobs (reportJobs). The web route
+# POST /api/reports publishes { jobId } here; the process-report Cloud
+# Function (Eventarc-triggered, runs as sync-runner SA) consumes it and
+# fans out to the per-platform report runners. See docs/unified-reports.md.
+resource "google_pubsub_topic" "report" {
+  project                    = var.project_id
+  name                       = "report-requested"
+  message_retention_duration = local.pubsub_retention
+}
+
 # Allow the sync-runner SA to publish amazon report requests from the web
 # route handler (via the runtime SA that also runs process-amazon-report).
 resource "google_pubsub_topic_iam_member" "runner_amazon_report_publisher" {
@@ -61,4 +71,23 @@ resource "google_pubsub_topic_iam_member" "vercel_sync_credential_publisher" {
   topic   = google_pubsub_topic.sync_credential.name
   role    = "roles/pubsub.publisher"
   member  = "serviceAccount:${google_service_account.vercel_app.email}"
+}
+
+# Allow the Vercel app SA to publish unified report-job requests from the
+# web route handler POST /api/reports (apps/web/lib/server/pubsub-publish.ts).
+resource "google_pubsub_topic_iam_member" "vercel_report_publisher" {
+  project = var.project_id
+  topic   = google_pubsub_topic.report.name
+  role    = "roles/pubsub.publisher"
+  member  = "serviceAccount:${google_service_account.vercel_app.email}"
+}
+
+# Allow the sync-runner SA to publish report requests too — used when the
+# worker re-publishes a job to itself (retry/resume) and for parity with the
+# amazon-report topic grant.
+resource "google_pubsub_topic_iam_member" "runner_report_publisher" {
+  project = var.project_id
+  topic   = google_pubsub_topic.report.name
+  role    = "roles/pubsub.publisher"
+  member  = "serviceAccount:${google_service_account.sync_runner.email}"
 }
