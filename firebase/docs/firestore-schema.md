@@ -22,6 +22,14 @@ Replaces `profiles` + `subscriptions`. UID matches Firebase Auth UID.
   paypalCustomerId: string | null,
   currentPeriodEnd: Timestamp | null,
   canceledAt: Timestamp | null,
+  // Active paid plan when tier === 'pro' (optional; null/absent on trial).
+  // Drives upgrade/downgrade UX. Written by the mock-checkout flow in
+  // apps/web/lib/server/mutations/subscription.ts (pending real PayPal billing).
+  billingPlan?: 'pro_monthly' | 'pro_yearly' | null,
+  // Cancellation scheduled. tier/status stay pro/active so access is RETAINED
+  // until currentPeriodEnd ("cancel at period end"); a period-end job — or the
+  // defensive web check — then drops access. Absent/false = auto-renewing.
+  cancelAtPeriodEnd?: boolean,
   createdAt: Timestamp,
   updatedAt: Timestamp,
 }

@@ -42,7 +42,7 @@ fafa-iac/
 | `kms` | `google_kms_key_ring`, `google_kms_crypto_key` | CMEK for Firestore; rotation managed |
 | `firestore` | `google_firestore_database` + imported Firebase project/web app | Native mode, asia-northeast3, CMEK-encrypted, delete protection ON |
 | `iam` | 3 SAs + role bindings | `sa-sync-runner` (Functions runtime), `sa-scheduler-invoker` (Scheduler→Run), `sa-vercel-app` (Vercel→Firestore+OIDC) |
-| `pubsub` | 2 topics + DLQ | `sync-credential-requested`, `fcm-send-requested`, `fafa-dead-letter` |
+| `pubsub` | 3 topics + DLQ | `sync-credential-requested`, `fcm-send-requested`, `report-requested`, `fafa-dead-letter` |
 | `secrets` | 10 `google_secret_manager_secret` + IAM bindings | Platform OAuth credentials (AMAZON, GOOGLE, META, TIKTOK); `sa-sync-runner` gets `secretAccessor`. `prevent_destroy = true`. Values seeded out-of-band (never in TF state). |
 | `functions` | 6 `google_cloudfunctions2_function` shells | Source updated out-of-band; lifecycle ignores `build_config[0].source` |
 | `scheduler` | 3 `google_cloud_scheduler_job` | `*/15 * * * *` sync-dispatch, `0 2 * * *` cleanup, `0 3 * * *` expire-trials |
