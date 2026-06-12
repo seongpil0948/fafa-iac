@@ -49,7 +49,7 @@ Short-lived CSRF token for OAuth flows. TTL field: `expiresAt` (10 min).
 ```
 
 ### `credentials/{credentialId}`
-Per-platform OAuth credential. **`credentialId`** = deterministic hash `sha1(uid + ':' + platform + ':' + accountId)` to enforce uniqueness without a separate transaction.
+Per-platform OAuth credential. **`credentialId`** = `credentialDocId(uid, platform, accountId)` → `${uid}:${platform}:${accountId}` (deterministic, enforces uniqueness without a separate transaction).
 ```ts
 {
   uid: string,
@@ -57,17 +57,22 @@ Per-platform OAuth credential. **`credentialId`** = deterministic hash `sha1(uid
   accountId: string,
   accountName: string,
   label: string | null,
-  accessToken: string,      // plaintext; CMEK protects at rest
+  accessToken: string,      // plaintext at rest (CMEK is NOT enabled on the live DB)
   refreshToken: string | null,
   expiresAt: Timestamp | null,
   scope: string | null,
   meta: Record<string, unknown>,   // platform-specific (marketplace, profile_id, etc.)
   isActive: boolean,
   lastSyncedAt: Timestamp | null,
-  nextSyncAt: Timestamp | null,    // drives sync-dispatch query
-  lastSyncStatus: 'idle' | 'pending' | 'success' | 'error' | 'auth_required',
+  nextSyncAt: Timestamp | null,    // drives sync-dispatch query; backs off on repeated failure
+  lastSyncStatus: 'idle' | 'pending' | 'success' | 'partial' | 'error' | 'auth_required',
   lastSyncError: string | null,
   consecutiveFailures: number,
+  // Short-lived idempotency lease held by an in-flight sync-credential run
+  // (transaction-acquired, released on every terminal path). A redelivered
+  // Pub/Sub message that finds a non-expired lease aborts instead of
+  // double-writing. Absent/null when idle.
+  syncLease?: { runId: string, expiresAt: Timestamp } | null,
   createdAt: Timestamp,
   updatedAt: Timestamp,
 }
