@@ -68,8 +68,13 @@ apply_ttl syncRuns          expiresAt
 apply_ttl amazonMetricCache expiresAt
 apply_ttl amazonReportCache expiresAt
 apply_ttl usageLogs         expiresAt
-apply_ttl amazonReports     expiresAt
-apply_ttl reportJobs        expiresAt
+
+# NOTE deliberately ABSENT: amazonReports and reportJobs. Both persist rows
+# in a `rows` subcollection, which Firestore TTL cannot cascade to — a TTL
+# reaper deleting the parent orphans the rows forever. The daily `cleanup`
+# Cloud Function is the deleter of record for these two collections
+# (cascade: drain rows, then delete parent). Their TTL policies were
+# disabled on 2026-07-27; do not re-add them here.
 
 # Raw platform metric mirrors (90-day retention for reconciliation/audit).
 apply_ttl dailyMetrics_raw             expiresAt

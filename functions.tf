@@ -8,6 +8,7 @@ locals {
     cleanup               = "cleanup"
     expire_trials         = "expire-trials"
     process_amazon_report = "process-amazon-report"
+    process_report        = "process-report"
   }
 
   # Config for HTTPS-triggered functions (sync-on-connect, sync-on-demand,
@@ -49,6 +50,10 @@ locals {
     (local.function_names.process_amazon_report) = {
       entry_point = "processAmazonReport"
       topic       = google_pubsub_topic.amazon_report.id
+    }
+    (local.function_names.process_report) = {
+      entry_point = "processReport"
+      topic       = google_pubsub_topic.report.id
     }
   }
 }

@@ -16,6 +16,23 @@ resource "google_pubsub_topic" "dead_letter" {
   message_retention_duration = local.pubsub_retention
 }
 
+# Drain/inspection subscription on the DLQ topic. Without at least one
+# subscription, dead-lettered messages are dropped on arrival (topic
+# retention only buys a 7-day seek window) and nothing can be replayed
+# after an incident. Never auto-expire it; operators pull from it during
+# incident response (docs/deployment-runbook.md rollback section).
+resource "google_pubsub_subscription" "dead_letter_drain" {
+  project                    = var.project_id
+  name                       = "fafa-dead-letter-drain"
+  topic                      = google_pubsub_topic.dead_letter.id
+  message_retention_duration = local.pubsub_retention
+  retain_acked_messages      = false
+
+  expiration_policy {
+    ttl = "" # never expire, even with no pull activity
+  }
+}
+
 resource "google_pubsub_topic" "sync_credential" {
   project                    = var.project_id
   name                       = "sync-credential-requested"
