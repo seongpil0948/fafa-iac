@@ -95,6 +95,35 @@ resource "google_firestore_index" "composite" {
   }
 }
 
+# Single-field index exemptions, driven by the `fieldOverrides` array in
+# firestore.indexes.json.
+#
+# Firestore indexes every field by default and rejects a write whose index
+# entry is too large. `amazonMetricCache` stores a whole downloaded report on
+# one document (gzipped in `dataGz`; `data` is the pre-gzip shape still
+# draining via TTL) and neither field is ever queried on, so both are exempted.
+# Without this the sync-side report cache cannot be written at all for any
+# non-trivial account.
+#
+# NOTE: applies only to the fields listed here — `expiresAt` keeps the TTL
+# policy set by scripts/apply-ttl.sh, which this does not touch.
+resource "google_firestore_field" "index_exemptions" {
+  provider = google-beta
+
+  for_each = {
+    for f in try(local.firestore_indexes.fieldOverrides, []) :
+    "${f.collectionGroup}#${f.fieldPath}" => f
+  }
+
+  project    = var.project_id
+  database   = google_firestore_database.default.name
+  collection = each.value.collectionGroup
+  field      = each.value.fieldPath
+
+  # Empty index_config = no single-field indexes for this field.
+  index_config {}
+}
+
 resource "google_firebaserules_ruleset" "firestore" {
   provider = google-beta
   project  = var.project_id
